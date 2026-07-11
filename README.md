@@ -14,6 +14,9 @@ This is a prototype for a pitch, not the production system -- see `prototype_pla
 full scope and what was deliberately left out (auth, CI/CD, k8s, monitoring, etc. all belong to
 the real month-long project).
 
+- New to this repo? Start with **`ARCHITECTURE.md`** for a file-by-file explanation of how it fits together.
+- Presenting this? Use **`DEMO_GUIDE.md`** for a step-by-step run order and talking points.
+
 ## How it works
 
 | File | Role |
@@ -101,14 +104,22 @@ cache for adaptive, on a local GPU-accelerated Ollama install:
 
 | Metric | Baseline | Adaptive | Change |
 |---|---|---|---|
-| Avg latency | 5693 ms | 4619 ms | **-19%** |
-| Total estimated cost | 0.10792 | 0.05168 | **-52%** |
+| Avg latency | 6053 ms | 5881 ms | **-3%** |
+| Total estimated cost | 0.11841 | 0.07700 | **-35%** |
 | Cache hit rate | -- | 23% | -- |
 
 Cache hits came almost entirely from the `duplicate` (53%) and `paraphrase` (40%) categories,
 confirming the semantic cache catches reworded repeats, not just exact ones -- `simple`,
 `complex`, and `unique` categories (by design, no repeats) had a 0% hit rate. Of cache misses,
 43% were routed to the small model, 35% medium, 22% large.
+
+Latency savings are modest on this run because the "large" tier (22% of cache misses -- genuinely
+complex questions) can take as long as or longer than the baseline's single fixed model, offsetting
+the time saved by instant cache hits and fast small-tier calls. Cost savings are the clearer story
+here: the adaptive system only pays the expensive rate when a question actually needs it, instead
+of paying it for every question by default. Latency and cost both have real run-to-run variance on
+local hardware (see the retry note below) -- re-running `run_benchmark.py` will not reproduce these
+exact numbers, only the same direction of effect.
 
 A 10-sample quality spot-check (`quality_check.py`) on cases where the router picked a smaller
 model and got a different answer than baseline passed 7/10 -- the tiny `qwen2.5:0.5b` model did
